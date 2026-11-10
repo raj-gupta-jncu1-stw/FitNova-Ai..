@@ -1,0 +1,502 @@
+
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Fitness Buddy — Architectural Blueprint</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: -apple-system, "Segoe UI", system-ui, sans-serif;
+    background: #0d1117;
+    color: #e6edf3;
+    min-height: 100vh;
+    padding: 36px 28px 20px;
+  }
+
+  /* ── Header ── */
+  .header { text-align: center; margin-bottom: 38px; }
+  .header h1 { font-size: 26px; font-weight: 700; letter-spacing: .02em; color: #fff; }
+  .header h1 span { color: #4f8ef7; }
+  .header p { font-size: 13px; color: #8b949e; margin-top: 6px; }
+  .badge {
+    display: inline-block; margin-top: 10px;
+    background: #1f2d45; border: 1px solid #4f8ef7;
+    color: #4f8ef7; font-size: 11px; font-weight: 600;
+    padding: 4px 12px; border-radius: 20px; letter-spacing: .06em;
+    text-transform: uppercase;
+  }
+
+  /* ── Main canvas ── */
+  .canvas {
+    max-width: 980px;
+    margin: 0 auto;
+    position: relative;
+  }
+
+  /* ── Layers ── */
+  .layer {
+    border: 1.5px solid #30363d;
+    border-radius: 14px;
+    padding: 18px 20px 20px;
+    margin-bottom: 0;
+    position: relative;
+    background: #161b22;
+  }
+  .layer-label {
+    position: absolute;
+    top: -12px; left: 18px;
+    font-size: 10px; font-weight: 700;
+    text-transform: uppercase; letter-spacing: .1em;
+    padding: 2px 10px; border-radius: 4px;
+  }
+
+  /* Layer colours */
+  .layer-user   { border-color: #3b82f6; }
+  .layer-user   .layer-label { background: #3b82f6; color: #fff; }
+
+  .layer-fe     { border-color: #22c55e; }
+  .layer-fe     .layer-label { background: #22c55e; color: #fff; }
+
+  .layer-be     { border-color: #f59e0b; }
+  .layer-be     .layer-label { background: #f59e0b; color: #000; }
+
+  .layer-ibm    { border-color: #a78bfa; }
+  .layer-ibm    .layer-label { background: #a78bfa; color: #fff; }
+
+  /* ── Connector arrows ── */
+  .arrow-wrap {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0;
+    margin: 10px 0;
+    position: relative;
+  }
+  .arrow-line {
+    width: 2px;
+    height: 28px;
+    background: #30363d;
+    position: relative;
+  }
+  .arrow-line::after {
+    content: '';
+    position: absolute;
+    bottom: -7px; left: 50%;
+    transform: translateX(-50%);
+    border-left: 6px solid transparent;
+    border-right: 6px solid transparent;
+    border-top: 8px solid #4f8ef7;
+  }
+  .arrow-label {
+    position: absolute;
+    left: calc(50% + 12px);
+    font-size: 10px;
+    color: #4f8ef7;
+    white-space: nowrap;
+    font-weight: 600;
+    letter-spacing: .03em;
+    top: 50%; transform: translateY(-50%);
+  }
+  .arrow-label-left {
+    position: absolute;
+    right: calc(50% + 12px);
+    font-size: 10px;
+    color: #22c55e;
+    white-space: nowrap;
+    font-weight: 600;
+    letter-spacing: .03em;
+    top: 50%; transform: translateY(-50%);
+  }
+
+  /* ── Boxes ── */
+  .boxes {
+    display: flex;
+    gap: 14px;
+    flex-wrap: wrap;
+    justify-content: center;
+    margin-top: 6px;
+  }
+
+  .box {
+    border: 1px solid #30363d;
+    border-radius: 10px;
+    padding: 12px 16px;
+    text-align: center;
+    flex: 1;
+    min-width: 140px;
+    max-width: 200px;
+    background: #0d1117;
+    position: relative;
+  }
+  .box-icon { font-size: 22px; margin-bottom: 6px; }
+  .box-title { font-size: 13px; font-weight: 700; color: #e6edf3; }
+  .box-sub   { font-size: 11px; color: #8b949e; margin-top: 3px; line-height: 1.4; }
+
+  /* Box accent borders */
+  .box-blue   { border-color: #3b82f6; }
+  .box-green  { border-color: #22c55e; }
+  .box-amber  { border-color: #f59e0b; }
+  .box-purple { border-color: #a78bfa; }
+  .box-red    { border-color: #f87171; }
+  .box-cyan   { border-color: #22d3ee; }
+
+  /* ── Routes table ── */
+  .routes {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+    gap: 10px;
+    margin-top: 6px;
+  }
+  .route {
+    background: #0d1117;
+    border: 1px solid #30363d;
+    border-radius: 8px;
+    padding: 10px 12px;
+  }
+  .route-method {
+    display: inline-block;
+    font-size: 10px; font-weight: 700;
+    padding: 2px 7px; border-radius: 4px;
+    margin-bottom: 5px; letter-spacing: .05em;
+  }
+  .method-get  { background: #1a3a1a; color: #22c55e; border: 1px solid #22c55e; }
+  .method-post { background: #2a2200; color: #f59e0b; border: 1px solid #f59e0b; }
+  .route-path  { font-size: 12px; font-weight: 700; color: #e6edf3; font-family: monospace; }
+  .route-desc  { font-size: 11px; color: #8b949e; margin-top: 2px; }
+
+  /* ── IBM section inner ── */
+  .ibm-inner {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+    margin-top: 6px;
+  }
+  .ibm-box {
+    background: #0d1117;
+    border: 1px solid #30363d;
+    border-radius: 10px;
+    padding: 14px 16px;
+  }
+  .ibm-box h4 { font-size: 12px; font-weight: 700; color: #a78bfa; margin-bottom: 8px; text-transform: uppercase; letter-spacing: .07em; }
+  .ibm-detail { font-size: 12px; color: #8b949e; line-height: 1.7; }
+  .ibm-detail strong { color: #e6edf3; }
+
+  /* ── Data flow ── */
+  .flow-row {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    margin-top: 36px;
+    flex-wrap: wrap;
+  }
+  .flow-step {
+    background: #161b22;
+    border: 1px solid #30363d;
+    border-radius: 8px;
+    padding: 10px 14px;
+    font-size: 12px;
+    color: #e6edf3;
+    text-align: center;
+    min-width: 110px;
+    position: relative;
+  }
+  .flow-step .num {
+    display: block;
+    width: 20px; height: 20px;
+    border-radius: 50%;
+    background: #4f8ef7;
+    color: #fff;
+    font-size: 10px; font-weight: 700;
+    line-height: 20px;
+    margin: 0 auto 6px;
+  }
+  .flow-arrow {
+    font-size: 18px;
+    color: #30363d;
+  }
+
+  /* ── Tech stack pills ── */
+  .tech-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    justify-content: center;
+    margin-top: 28px;
+  }
+  .tech-pill {
+    background: #161b22;
+    border: 1px solid #30363d;
+    border-radius: 20px;
+    padding: 5px 14px;
+    font-size: 12px;
+    color: #8b949e;
+  }
+  .tech-pill strong { color: #e6edf3; }
+
+  /* ── Section title ── */
+  .section-title {
+    font-size: 11px;
+    font-weight: 700;
+    color: #8b949e;
+    text-transform: uppercase;
+    letter-spacing: .1em;
+    margin: 28px 0 12px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .section-title::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: #21262d;
+  }
+
+  /* ── Footer ── */
+  .footer {
+    text-align: center;
+    margin-top: 32px;
+    padding-top: 16px;
+    border-top: 1px solid #21262d;
+    font-size: 11px;
+    color: #484f58;
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>🏋️ <span>Fitness Buddy</span> — Architectural Blueprint</h1>
+  <p>Problem Statement #13 · AI-Powered Health &amp; Fitness Coach</p>
+  <div class="badge">IBM Granite · watsonx.ai · Node.js · Express</div>
+</div>
+
+<div class="canvas">
+
+  
+  <div class="layer layer-user">
+    <div class="layer-label">① User Layer</div>
+    <div class="boxes">
+      <div class="box box-blue">
+        <div class="box-icon">💬</div>
+        <div class="box-title">AI Chat Coach</div>
+        <div class="box-sub">Conversational fitness Q&amp;A with history</div>
+      </div>
+      <div class="box box-blue">
+        <div class="box-icon">🏃</div>
+        <div class="box-title">Workout Planner</div>
+        <div class="box-sub">Level · Goal · Duration picker</div>
+      </div>
+      <div class="box box-blue">
+        <div class="box-icon">🥗</div>
+        <div class="box-title">Meal Planner</div>
+        <div class="box-sub">Diet type · Goal · Allergy form</div>
+      </div>
+      <div class="box box-blue">
+        <div class="box-icon">⚡</div>
+        <div class="box-title">Daily Motivation</div>
+        <div class="box-sub">Quote + habit tracker</div>
+      </div>
+    </div>
+  </div>
+
+  
+  <div class="arrow-wrap">
+    <div class="arrow-line"></div>
+    <span class="arrow-label">HTTP Request (fetch)</span>
+    <span class="arrow-label-left">JSON Response</span>
+  </div>
+
+  
+  <div class="layer layer-fe">
+    <div class="layer-label">② Frontend Layer — Vanilla JS · HTML5 · CSS3</div>
+    <div class="boxes">
+      <div class="box box-green">
+        <div class="box-icon">📄</div>
+        <div class="box-title">index.html</div>
+        <div class="box-sub">4-view SPA shell · Sidebar nav · Responsive layout</div>
+      </div>
+      <div class="box box-green">
+        <div class="box-icon">🎨</div>
+        <div class="box-title">style.css</div>
+        <div class="box-sub">Dark theme · CSS variables · Mobile responsive</div>
+      </div>
+      <div class="box box-green">
+        <div class="box-icon">⚙️</div>
+        <div class="box-title">app.js</div>
+        <div class="box-sub">Chat state · API calls · Habit tracker logic</div>
+      </div>
+    </div>
+  </div>
+
+  
+  <div class="arrow-wrap">
+    <div class="arrow-line"></div>
+    <span class="arrow-label">REST API calls</span>
+    <span class="arrow-label-left">JSON replies</span>
+  </div>
+
+  
+  <div class="layer layer-be">
+    <div class="layer-label">③ Backend Layer — Node.js · Express.js</div>
+
+    <div class="routes">
+      <div class="route">
+        <span class="route-method method-get">GET</span>
+        <div class="route-path">/api/health</div>
+        <div class="route-desc">Health check + model info</div>
+      </div>
+      <div class="route">
+        <span class="route-method method-post">POST</span>
+        <div class="route-path">/api/chat</div>
+        <div class="route-desc">Main AI chat with history</div>
+      </div>
+      <div class="route">
+        <span class="route-method method-post">POST</span>
+        <div class="route-path">/api/workout</div>
+        <div class="route-desc">Custom workout plan generator</div>
+      </div>
+      <div class="route">
+        <span class="route-method method-post">POST</span>
+        <div class="route-path">/api/nutrition</div>
+        <div class="route-desc">Personalised meal plan</div>
+      </div>
+      <div class="route">
+        <span class="route-method method-get">GET</span>
+        <div class="route-path">/api/motivation</div>
+        <div class="route-desc">Daily motivational quote + tip</div>
+      </div>
+      <div class="route">
+        <span class="route-method method-get">GET</span>
+        <div class="route-path">/*</div>
+        <div class="route-desc">Serves frontend SPA</div>
+      </div>
+    </div>
+
+    
+    <div style="margin-top:14px">
+      <div style="font-size:10px;font-weight:700;color:#f59e0b;text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px">Middleware Pipeline</div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <div style="background:#0d1117;border:1px solid #f59e0b33;border-radius:6px;padding:6px 12px;font-size:11px;color:#8b949e">🔒 <strong style="color:#e6edf3">Helmet</strong> — Security headers</div>
+        <div style="background:#0d1117;border:1px solid #f59e0b33;border-radius:6px;padding:6px 12px;font-size:11px;color:#8b949e">🌐 <strong style="color:#e6edf3">CORS</strong> — Cross-origin</div>
+        <div style="background:#0d1117;border:1px solid #f59e0b33;border-radius:6px;padding:6px 12px;font-size:11px;color:#8b949e">📦 <strong style="color:#e6edf3">body-parser</strong> — JSON / URL-encoded</div>
+        <div style="background:#0d1117;border:1px solid #f59e0b33;border-radius:6px;padding:6px 12px;font-size:11px;color:#8b949e">📁 <strong style="color:#e6edf3">static</strong> — Serves /public</div>
+        <div style="background:#0d1117;border:1px solid #f59e0b33;border-radius:6px;padding:6px 12px;font-size:11px;color:#8b949e">⚙️ <strong style="color:#e6edf3">dotenv</strong> — Env config</div>
+      </div>
+    </div>
+  </div>
+
+  
+  <div class="arrow-wrap">
+    <div class="arrow-line"></div>
+    <span class="arrow-label">HTTPS + Bearer Token</span>
+    <span class="arrow-label-left">Generated text</span>
+  </div>
+
+  
+  <div class="layer layer-ibm">
+    <div class="layer-label">④ IBM Cloud Layer — watsonx.ai</div>
+    <div class="ibm-inner">
+      <div class="ibm-box">
+        <h4>🔐 IBM IAM Authentication</h4>
+        <div class="ibm-detail">
+          <strong>Endpoint:</strong> iam.cloud.ibm.com<br />
+          <strong>Grant type:</strong> apikey<br />
+          <strong>Token:</strong> Bearer JWT (1hr)<br />
+          <strong>Cache:</strong> Auto-refresh 5 min before expiry
+        </div>
+      </div>
+      <div class="ibm-box">
+        <h4>🤖 IBM Granite Model</h4>
+        <div class="ibm-detail">
+          <strong>Model:</strong> ibm/granite-4-h-small<br />
+          <strong>API:</strong> /ml/v1/text/generation<br />
+          <strong>Decoding:</strong> Greedy · 600 tokens<br />
+          <strong>Template:</strong> Granite 4 chat format
+        </div>
+      </div>
+      <div class="ibm-box">
+        <h4>📋 Prompt Architecture</h4>
+        <div class="ibm-detail">
+          <strong>System:</strong> Fitness coach persona<br />
+          <strong>History:</strong> Last 10 turns injected<br />
+          <strong>Format:</strong> start_of_role tokens<br />
+          <strong>Stops:</strong> end_of_text / start_of_role
+        </div>
+      </div>
+      <div class="ibm-box">
+        <h4>🌍 watsonx.ai Project</h4>
+        <div class="ibm-detail">
+          <strong>Region:</strong> us-south<br />
+          <strong>Base URL:</strong> ml.cloud.ibm.com<br />
+          <strong>Version:</strong> 2023-05-29<br />
+          <strong>Plan:</strong> IBM Cloud Lite (free)
+        </div>
+      </div>
+    </div>
+  </div>
+
+  
+  <div class="section-title">End-to-End Data Flow</div>
+  <div class="flow-row">
+    <div class="flow-step">
+      <span class="num">1</span>
+      User types message in browser
+    </div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-step">
+      <span class="num">2</span>
+      app.js sends POST /api/chat
+    </div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-step">
+      <span class="num">3</span>
+      Express routes to graniteService
+    </div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-step">
+      <span class="num">4</span>
+      IAM token fetched (cached)
+    </div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-step">
+      <span class="num">5</span>
+      Prompt built with history
+    </div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-step">
+      <span class="num">6</span>
+      IBM Granite generates reply
+    </div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-step">
+      <span class="num">7</span>
+      JSON response renders in chat
+    </div>
+  </div>
+
+  
+  <div class="section-title">Technology Stack</div>
+  <div class="tech-row">
+    <div class="tech-pill"><strong>Runtime</strong> Node.js v24</div>
+    <div class="tech-pill"><strong>Framework</strong> Express 4</div>
+    <div class="tech-pill"><strong>AI</strong> IBM Granite 4</div>
+    <div class="tech-pill"><strong>Cloud</strong> IBM watsonx.ai</div>
+    <div class="tech-pill"><strong>Auth</strong> IBM IAM API Key</div>
+    <div class="tech-pill"><strong>HTTP</strong> Axios</div>
+    <div class="tech-pill"><strong>Security</strong> Helmet + CORS</div>
+    <div class="tech-pill"><strong>Config</strong> dotenv</div>
+    <div class="tech-pill"><strong>Frontend</strong> Vanilla JS</div>
+    <div class="tech-pill"><strong>UI</strong> CSS3 Dark Theme</div>
+    <div class="tech-pill"><strong>Port</strong> localhost:3000</div>
+  </div>
+
+</div>
+
+<div class="footer">Made with IBM Bob  ·  Fitness Buddy · Problem Statement #13 · IBM Granite on watsonx.ai</div>
+
+</body>
+</html>
